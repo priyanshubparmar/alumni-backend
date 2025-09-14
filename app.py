@@ -392,4 +392,38 @@ async def view_photo(alumni_id: str):
         raise HTTPException(status_code=404, detail="Profile photo not found")
 
     return FileResponse(photo_path, media_type="image/jpeg", filename=photo_filename)
+
+
+@app.get("/download/json")
+def download_json():
+    file_path = "alumni_data.json"
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="application/json", filename="alumni_data.json")
+    return {"error": "File not found"}
+
+
+# API to download all photos as a ZIP
+@app.get("/download/photos")
+def download_all_photos():
+    zip_path = "all_photos.zip"
+
+    # Create a zip file
+    with zipfile.ZipFile(zip_path, "w") as zipf:
+        for root, dirs, files in os.walk(PHOTO_DIR):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, arcname=file)  # arcname keeps only file name in zip
+
+    # Send the zip file as response
+    if os.path.exists(zip_path):
+        return FileResponse(zip_path, media_type="application/zip", filename="all_photos.zip")
+    return {"error": "No photos found"}
+
+
+import os
+import zipfile
+import io
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+
     
